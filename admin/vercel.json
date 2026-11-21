@@ -1,0 +1,13 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/:page(login|dashboard|realtime|music|audience|engagement|performance|settings|profile)",
+      "destination": "/api/admin?view=:page"
+    },
+    {
+      "source": "/",
+      "destination": "/api/admin?view=dashboard"
+    }
+  ]
+}

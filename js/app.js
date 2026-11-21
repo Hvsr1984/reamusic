@@ -84,6 +84,7 @@ const FALLBACK_TRACKS = [
 class HybridAudioEngine {
   constructor() {
     this.audio = new Audio();
+    window.reaAnalytics?.attach(this.audio);
     this.audio.crossOrigin = 'anonymous';
     this.audio.preload = 'auto';
 
@@ -129,6 +130,7 @@ class HybridAudioEngine {
       this.ctx.resume();
     }
 
+    window.reaAnalytics?.select(track);
     this.currentTrack = track;
     if (track.audioUrl) {
       if (this.audio.src !== track.audioUrl) {
@@ -1089,7 +1091,7 @@ class REAMusicApp {
   // ===========================================================================
   async loadExploreCatalog() {
     try {
-      const res = await fetch('/api/explore');
+      const res = await (window.reaAnalytics?.fetch || fetch)('/api/explore');
       if (!res.ok) throw new Error('Explore API offline');
       const data = await res.json();
 
@@ -1122,7 +1124,7 @@ class REAMusicApp {
         card.addEventListener('click', async () => {
           this.showToast(`Loading album "${album.title}"...`);
           try {
-            const res = await fetch(`/api/album?id=${album.id}`);
+            const res = await (window.reaAnalytics?.fetch || fetch)(`/api/album?id=${album.id}`);
             const data = await res.json();
             if (data.songs && data.songs.length > 0) {
               this.queue = data.songs;
@@ -1363,7 +1365,7 @@ class REAMusicApp {
   // ===========================================================================
   async loadIndianMusicCatalog() {
     try {
-      const res = await fetch('/api/trending?category=all');
+      const res = await (window.reaAnalytics?.fetch || fetch)('/api/trending?category=all');
       if (!res.ok) throw new Error('API offline');
       const data = await res.json();
 
@@ -1390,7 +1392,8 @@ class REAMusicApp {
 
   async performLiveSearch(query) {
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      window.reaAnalytics?.event('search');
+      const res = await (window.reaAnalytics?.fetch || fetch)(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       const results = data.results || [];
 
@@ -1430,7 +1433,7 @@ class REAMusicApp {
   async fetchTrackLyrics(track) {
     if (!track || track.lyricsLoaded) return;
     try {
-      const res = await fetch(`/api/lyrics?track=${encodeURIComponent(track.title)}&artist=${encodeURIComponent(track.artist)}`);
+      const res = await (window.reaAnalytics?.fetch || fetch)(`/api/lyrics?track=${encodeURIComponent(track.title)}&artist=${encodeURIComponent(track.artist)}`);
       const data = await res.json();
       track.lyrics = data.lines || [];
       track.lyricsLoaded = true;
@@ -1450,7 +1453,7 @@ class REAMusicApp {
     }
 
     try {
-      const res = await fetch(`/api/trending?category=${filter}`);
+      const res = await (window.reaAnalytics?.fetch || fetch)(`/api/trending?category=${filter}`);
       const data = await res.json();
       const songs = data.songs || [];
       if (songs.length > 0) {

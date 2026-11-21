@@ -2,6 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import collect from './api/analytics/collect.js';
 import apiHandler from './api/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,7 @@ const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
   const pathname = parsedUrl.pathname;
 
+  if (pathname === '/api/analytics/collect') return collect(req, res);
   // Delegate /api/* to the universal Vercel API router
   if (pathname.startsWith('/api')) {
     return apiHandler(req, res);
@@ -32,10 +34,8 @@ const server = http.createServer(async (req, res) => {
   // Static file server
   let cleanUrl = pathname;
   if (cleanUrl === '/') cleanUrl = '/index.html';
-  let filePath = path.join(__dirname, 'public', cleanUrl);
-  if (!fs.existsSync(filePath)) {
-    filePath = path.join(__dirname, cleanUrl);
-  }
+  let filePath = path.join(__dirname, 'dist', cleanUrl);
+  if (!filePath.startsWith(path.join(__dirname,'dist') + path.sep)) { res.writeHead(404); return res.end(); }
 
   fs.readFile(filePath, (err, content) => {
     if (err) {
