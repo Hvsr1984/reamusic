@@ -96,13 +96,13 @@ begin
  tracks as (select track,max(art) art,max(title) title,max(artist) artist,count(*) filter(where kind='track_start') plays,
  count(distinct visitor) filter(where playback is not null) listeners,round(sum(seconds)/60,2) minutes,
  count(*) filter(where kind='track_end') completed,max(ts) filter(where kind='track_start') latest from e where track is not null group by track),
- days as (select (ts at time zone z)::date day,count(distinct visitor) visitors,count(*) filter(where kind='track_start') plays,round(sum(seconds)/60,2) minutes from e group by 1),
- hours as (select extract(hour from ts at time zone z)::int hour,count(*) filter(where kind='track_start') plays,round(sum(seconds)/60,2) minutes from e group by 1),
+ days as (select (ts at time zone z)::date as day,count(distinct visitor) visitors,count(*) filter(where kind='track_start') plays,round(sum(seconds)/60,2) minutes from e group by 1),
+ hours as (select extract(hour from ts at time zone z)::int as hour,count(*) filter(where kind='track_start') plays,round(sum(seconds)/60,2) minutes from e group by 1),
  breakdown as (select k dimension,coalesce(v,'Unavailable') label,count(distinct visitor) visitors from e cross join lateral
  (values ('Device',agent->>'device'),('Browser',agent->>'browser'),('OS',agent->>'os'),('Country',agent->>'country'),('Referral',referral)) as dim(k,v) where k<>'Referral' or v is not null group by k,v),
  artist_summary as (select artist,count(*) filter(where kind='track_start') plays,count(distinct visitor) filter(where playback is not null) listeners,round(sum(seconds)/60,2) minutes from e where track is not null group by artist),
  firsts as (select distinct e.visitor,v.first_seen from e join rea.visitors v on v.id=e.visitor),
- performance as (select (ts at time zone z)::date day,kind,count(*) samples,round(avg(value),2) average from e where kind in ('client_error','playback_error','api_error','api_latency','page_load','lcp','inp','cls') group by 1,2)
+ performance as (select (ts at time zone z)::date as day,kind,count(*) samples,round(avg(value),2) average from e where kind in ('client_error','playback_error','api_error','api_latency','page_load','lcp','inp','cls') group by 1,2)
  select jsonb_build_object('visitors',count(distinct visitor),'newVisitors',(select count(*) from firsts where first_seen>=lo),
  'today',(select count(distinct visitor) from rea.events where ts>=((now() at time zone z)::date::timestamp at time zone z)),
  'sessions',(select count(*) from sess),'averageSession',(select round(avg(duration)) from sess),'plays',count(*) filter(where kind='track_start'),
